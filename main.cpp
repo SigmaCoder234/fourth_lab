@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include "LazySequence.h"
 #include "Stream.h"
+#include "OnlineStatistics.h"
 
 template <typename T>
 T ReadValue() {
@@ -112,15 +113,56 @@ public:
     }
 };
 
-// Функция для красивого вывода первых N элементов последовательности
+// Функция для красивого вывода элементов (с поддержкой омег)
 template <class T>
-void PrintSequence(LazySequence<T>* seq, int count, const std::string& name) {
-    std::cout << "   " << name << " (first " << count << " elements): [";
-    for (int i = 0; i < count; ++i) {
-        std::cout << seq->Get(i);
-        if (i < count - 1) std::cout << ", ";
+void PrintAdvancedSequence(LazySequence<T>* seq, const std::string& name) {
+    Ordinal len = seq->GetLength();
+    int omegas = len.GetOmega();
+    int parts = omegas + (len.GetFinite() > 0 && omegas > 0 ? 1 : 0);
+    if (omegas == 0) parts = 1;
+    
+    if (parts > 1) {
+        std::cout << "The sequence " << name << " spans multiple concatenated parts (" << parts << " parts).\n";
     }
-    std::cout << "]" << std::endl;
+    
+    int count;
+    std::cout << "How many elements to print per part for " << name << "? (Enter -1 for ALL if finite): "; 
+    count = ReadValue<int>();
+    
+    for (int p = 0; p < parts; ++p) {
+        int partCount = count;
+        if (count == -1) {
+            if (p < omegas) {
+                std::cout << "   Warning: Part " << (p+1) << " is infinite. Defaulting to 20 elements.\n";
+                partCount = 20;
+            } else {
+                partCount = len.GetFinite();
+            }
+        } else if (p >= omegas && count > len.GetFinite()) {
+            std::cout << "   Note: Requested " << count << " elements, but only " << len.GetFinite() << " available in this finite part. Outputting all available elements.\n";
+            partCount = len.GetFinite();
+        }
+
+        if (parts > 1) {
+            std::cout << "   Part " << (p+1) << " (w*" << p;
+            if (count == -1 && p >= omegas) std::cout << ", all " << partCount << " elements): [";
+            else std::cout << ", first " << partCount << " elements): [";
+        } else {
+            if (count == -1 && omegas == 0) std::cout << "   " << name << " (all " << partCount << " elements): [";
+            else std::cout << "   " << name << " (first " << partCount << " elements): [";
+        }
+        
+        for (int i = 0; i < partCount; ++i) {
+            try {
+                std::cout << seq->Get(Ordinal(p, i));
+                if (i < partCount - 1) std::cout << ", ";
+            } catch (const std::exception&) {
+                std::cout << " <End of part>";
+                break;
+            }
+        }
+        std::cout << "]\n";
+    }
 }
 
 void PrintMenu() {
@@ -135,6 +177,7 @@ void PrintMenu() {
     std::cout << "8. Reduce (Sum first N elements)\n";
     std::cout << "9. Reset Base Sequence\n";
     std::cout << "10. Print Subsequence\n";
+    std::cout << "11. Calculate Online Statistics (Min, Max, Mean, Median)\n";
     std::cout << "0. Exit\n";
     std::cout << "Choice: ";
 }
@@ -263,33 +306,7 @@ int main() {
                 break;
             }
             case 6: {
-                Ordinal len = currentSeq->GetLength();
-                int omegas = len.GetOmega();
-                int parts = omegas + (len.GetFinite() > 0 && omegas > 0 ? 1 : 0);
-                if (omegas == 0) parts = 1;
-                
-                if (parts > 1) {
-                    std::cout << "The sequence spans multiple concatenated parts (" << parts << " parts).\n";
-                }
-                
-                int count;
-                std::cout << "How many elements to print per part? "; count = ReadValue<int>();
-                
-                for (int p = 0; p < parts; ++p) {
-                    if (parts > 1) std::cout << "   Part " << (p+1) << " (w*" << p << ", first " << count << " elements): [";
-                    else std::cout << "   CurrentSeq (first " << count << " elements): [";
-                    
-                    for (int i = 0; i < count; ++i) {
-                        try {
-                            std::cout << currentSeq->Get(Ordinal(p, i));
-                            if (i < count - 1) std::cout << ", ";
-                        } catch (const std::exception&) {
-                            std::cout << " <End of part>";
-                            break;
-                        }
-                    }
-                    std::cout << "]\n";
-                }
+                PrintAdvancedSequence(currentSeq, "CurrentSeq");
                 break;
             }
             case 7: {
@@ -324,13 +341,63 @@ int main() {
                 if (!subSeq) {
                     std::cout << "Subsequence is not created yet! Use option 3 first.\n";
                 } else {
-                    int count;
-                    std::cout << "How many elements to print from subsequence? "; count = ReadValue<int>();
                     try {
-                        PrintSequence(subSeq, count, "Subsequence");
+                        PrintAdvancedSequence(subSeq, "Subsequence");
                     } catch (const std::exception& e) {
                         std::cout << "Error: " << e.what() << "\n";
                     }
+                }
+                break;
+            }
+            
+            case 11: {
+                DynamicArray<long long> history(0);
+                int count;
+                std::cout << "How many elements in total to process for statistics? "; 
+                count = ReadValue<int>();
+                try {
+                    OnlineStatistics<long long> stats;
+                    Ordinal len = currentSeq->GetLength();
+                    int omegas = len.GetOmega();
+                    int parts = omegas + (len.GetFinite() > 0 && omegas > 0 ? 1 : 0);
+                    if (omegas == 0) parts = 1;
+                    
+                    int processed = 0;
+                    for (int p = 0; p < parts && processed < count; ++p) {
+                        int availableInPart = (p >= omegas) ? len.GetFinite() : -1;
+                        for (int i = 0; processed < count; ++i) {
+                            if (availableInPart != -1 && i >= availableInPart) {
+                                break;
+                            }
+                            try {
+                                long long val = currentSeq->Get(Ordinal(p, i));
+                                history.Resize(history.GetCount() + 1);
+                                history.Set(history.GetCount() - 1, val);
+                                stats.Consume(val);
+                                processed++;
+                                std::cout << "Step " << processed << " | Added: " << val 
+                                          << " | Min: " << stats.GetMin() 
+                                          << ", Max: " << stats.GetMax() 
+                                          << ", Mean: " << stats.GetMean() 
+                                          << ", Median: " << stats.GetMedian() << "\n"
+                                          << "  Heaps:\n";
+                                stats.PrintHeaps();                                          
+                                std::cout << "  History: [";
+                                for(int j = 0; j < history.GetCount(); ++j) {
+                                    std::cout << history.Get(j);
+                                    if (j < history.GetCount() - 1) std::cout << " ";
+                                }
+                                std::cout << "]\n\n";
+                            } catch (...) {
+                                break;
+                            }
+                        }
+                    }
+                    if (stats.GetCount() == 0) {
+                        std::cout << "No elements processed.\n";
+                    }
+                } catch (const std::exception& e) {
+                    std::cout << "Error: " << e.what() << "\n";
                 }
                 break;
             }

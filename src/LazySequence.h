@@ -105,7 +105,7 @@ public:
         return count;
     }
 
-    // --- ОПЕРАЦИИ (Map, Reduce, Where) ---
+    // --- ОПЕРАЦИИ Reduce ---
     template <class TOut>
     LazySequence<TOut>* Map(IMapFunction<T, TOut>* mapper);
 

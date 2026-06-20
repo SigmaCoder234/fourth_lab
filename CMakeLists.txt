@@ -42,6 +42,7 @@ add_executable(run_tests
     tests/test_queue.cpp
     tests/test_streams.cpp
     tests/test_statistics.cpp
+    tests/test_ordinal.cpp
 )
 target_link_libraries(run_tests gtest_main)
 include(CTest)

@@ -55,3 +55,20 @@ TEST(PriorityQueueTest, MinHeapTest) {
     EXPECT_EQ(pq.Pop(), 40);
     EXPECT_EQ(pq.Pop(), 50);
 }
+
+TEST(PriorityQueueTest, DuplicatesAndEmptyPeek) {
+    IntMaxComparer comp;
+    PriorityQueue<int> pq(&comp);
+    
+    EXPECT_THROW(pq.Peek(), std::out_of_range); // Проверка Peek на пустой куче
+    
+    pq.Push(10);
+    pq.Push(10);
+    pq.Push(10);
+    
+    EXPECT_EQ(pq.GetSize(), 3);
+    EXPECT_EQ(pq.Pop(), 10);
+    EXPECT_EQ(pq.Pop(), 10);
+    EXPECT_EQ(pq.Pop(), 10);
+    EXPECT_TRUE(pq.IsEmpty());
+}

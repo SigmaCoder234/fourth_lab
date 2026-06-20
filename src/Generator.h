@@ -15,7 +15,7 @@ public:
 };
 
 // Forward declaration, так как Generator тесно связан с LazySequence
-// Для ссылки на LazySequence его импорта (избавиться от рекурсивного включения)
+// Для ссылки на LazySequence без его импорта (избавиться от рекурсивного включения)
 // Говорит, что класс LazySequence существует, но его определение будет позже
 template <class T>
 class LazySequence;

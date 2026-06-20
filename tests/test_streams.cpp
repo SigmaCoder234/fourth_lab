@@ -41,3 +41,15 @@ TEST(StreamsTest, WriteOnlySequenceStreamTest) {
     EXPECT_EQ(arr.Get(0), 100);
     EXPECT_EQ(arr.Get(1), 200);
 }
+
+TEST(StreamsTest, EmptyStreamTest) {
+    DynamicArray<int> emptyArr(0); // Массив размера 0
+    ReadOnlySequenceStream<int> stream(&emptyArr);
+    
+    // Поток должен сразу сигнализировать, что он достиг конца
+    EXPECT_TRUE(stream.IsEndOfStream());
+    EXPECT_EQ(stream.GetPosition(), 0);
+    
+    // Попытка чтения должна вызывать исключение
+    EXPECT_THROW(stream.Read(), std::out_of_range);
+}

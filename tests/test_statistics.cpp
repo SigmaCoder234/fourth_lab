@@ -54,3 +54,29 @@ TEST(OnlineStatisticsTest, ConsumeStreamTest) {
     EXPECT_DOUBLE_EQ(stats.GetMean(), 15.0); // 75 / 5 = 15
     EXPECT_DOUBLE_EQ(stats.GetMedian(), 15.0); // sorted: 5, 10, 15, 20, 25 -> median 15
 }
+
+TEST(OnlineStatisticsTest, SortedInputBalancingAndNegativeNumbers) {
+    OnlineStatistics<int> stats;
+    
+    // Добавляем строго отсортированные данные от 1 до 100
+    // Это заставит балансировщик (BalanceHeaps) перекидывать элементы между кучами
+    for (int i = 1; i <= 100; ++i) {
+        stats.Consume(i);
+    }
+    
+    EXPECT_EQ(stats.GetCount(), 100);
+    EXPECT_EQ(stats.GetMin(), 1);
+    EXPECT_EQ(stats.GetMax(), 100);
+    EXPECT_DOUBLE_EQ(stats.GetMean(), 50.5); // Сумма 5050 / 100
+    EXPECT_DOUBLE_EQ(stats.GetMedian(), 50.5); // Медиана между 50 и 51
+    
+    // Проверка с отрицательными числами
+    OnlineStatistics<int> negStats;
+    negStats.Consume(-10);
+    negStats.Consume(-20);
+    negStats.Consume(-5);
+    
+    EXPECT_EQ(negStats.GetMin(), -20);
+    EXPECT_EQ(negStats.GetMax(), -5);
+    EXPECT_DOUBLE_EQ(negStats.GetMedian(), -10.0);
+}

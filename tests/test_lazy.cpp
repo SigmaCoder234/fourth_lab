@@ -57,6 +57,75 @@ TEST(LazySequenceTest, Concatenation) {
     delete result_seq;
 }
 
+// Генератор для проверки Reduce и GetSubsequence
+class SumReducerTest : public IReduceFunction<int> {
+public:
+    int Combine(const int& acc, const int& item) override { return acc + item; }
+};
+
+TEST(LazySequenceTest, ReduceAndSubsequenceTest) {
+    auto* b1 = new TestArithmeticProgressionRule(1, 1); // 1, 2, 3, 4, 5...
+    LazySequence<int> seq(b1);
+    
+    // Проверка Reduce: сумма первых 4 элементов (1 + 2 + 3 + 4 = 10)
+    SumReducerTest reducer;
+    int sum = seq.Reduce(&reducer, 0, 4);
+    EXPECT_EQ(sum, 10);
+    
+    // Проверка исключения для отрицательного числа элементов
+    EXPECT_THROW(seq.Reduce(&reducer, 0, -1), std::invalid_argument);
+    
+    // Проверка GetSubsequence (элементы со 2-го по 4-й: это 3, 4, 5)
+    LazySequence<int>* subSeq = seq.GetSubsequence(2, 4);
+    EXPECT_EQ(subSeq->Get(Ordinal(0, 0)), 3);
+    EXPECT_EQ(subSeq->Get(Ordinal(0, 1)), 4);
+    EXPECT_EQ(subSeq->Get(Ordinal(0, 2)), 5);
+    
+    // Ожидается ошибка выхода за пределы конечной длины подпоследовательности (длина = 3)
+    EXPECT_THROW(subSeq->Get(Ordinal(0, 3)), std::out_of_range);
+    
+    delete subSeq;
+}
+
+// Тест на мемоизацию кэша
+// Специальное правило, считающее количество вызовов метода Generate
+class CallCountingRule : public IGeneratorRule<int> {
+private:
+    int* counter;
+public:
+    CallCountingRule(int* c) : counter(c) {}
+    int Generate(const Ordinal& index) override {
+        (*counter)++;
+        return index.GetFinite() * 10;
+    }
+    IGeneratorRule<int>* Clone() const override {
+        return new CallCountingRule(counter);
+    }
+};
+
+TEST(LazySequenceTest, MemoizationCacheTest) {
+    int calls = 0;
+    LazySequence<int> seq(new CallCountingRule(&calls));
+    
+    EXPECT_EQ(calls, 0);
+    
+    // Первое обращение к элементу 0 вызывает генератор (0..0)
+    EXPECT_EQ(seq.Get(Ordinal(0, 0)), 0);
+    EXPECT_EQ(calls, 1);
+    
+    // Повторные обращения не должны увеличивать счетчик (данные берутся из кэша)
+    EXPECT_EQ(seq.Get(Ordinal(0, 0)), 0);
+    EXPECT_EQ(seq.Get(Ordinal(0, 0)), 0);
+    EXPECT_EQ(calls, 1); // Счетчик остался 1
+    
+    // Обращение к 3-му элементу вынудит вычислить 1, 2 и 3
+    EXPECT_EQ(seq.Get(Ordinal(0, 3)), 30);
+    EXPECT_EQ(calls, 4); // Вычислены элементы с индексами 0, 1, 2, 3
+    
+    // Проверка счетчика материализованных элементов
+    EXPECT_EQ(seq.GetMaterializedCount(), 4);
+}
+
 // Тест на корректный выброс исключения
 TEST(LazySequenceTest, OutOfBoundsFiniteTest) {
     // Конечное правило из 3 элементов (например, 0, 10, 20)
