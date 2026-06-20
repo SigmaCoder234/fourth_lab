@@ -23,9 +23,9 @@ TEST(StreamsTest, ReadOnlyReadOnlySequenceStreamTest) {
     EXPECT_THROW(stream.Read(), std::out_of_range);
 }
 
-TEST(StreamsTest, WriteOnlyReadOnlySequenceStreamTest) {
+TEST(StreamsTest, WriteOnlySequenceStreamTest) {
     DynamicArray<int> arr(0);
-    WriteOnlyReadOnlySequenceStream<int> stream(&arr);
+    WriteOnlySequenceStream<int> stream(&arr);
     
     EXPECT_EQ(stream.GetPosition(), 0);
     

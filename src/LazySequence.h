@@ -241,7 +241,7 @@ public:
             return B->Get(index - pos);
         }
         // Хвост последовательности A
-        return A->Get(index - bLength);
+        return A->Get(pos + (index - (pos + bLength)));
     }
 };
 

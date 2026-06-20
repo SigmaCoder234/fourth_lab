@@ -63,13 +63,13 @@ public:
 };
 
 template <class T>
-class WriteOnlyReadOnlySequenceStream : public WriteOnlyStream<T> {
+class WriteOnlySequenceStream : public WriteOnlyStream<T> {
 private:
     DynamicArray<T>* data;
     int currentIndex;
 
 public:
-    WriteOnlyReadOnlySequenceStream(DynamicArray<T>* array) : data(array), currentIndex(array->GetCount()) {}
+    WriteOnlySequenceStream(DynamicArray<T>* array) : data(array), currentIndex(array->GetCount()) {}
 
     size_t Write(const T& item) override {
         data->Resize(currentIndex + 1);

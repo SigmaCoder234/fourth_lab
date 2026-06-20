@@ -270,42 +270,25 @@ int main() {
                 
                 if (parts > 1) {
                     std::cout << "The sequence spans multiple concatenated parts (" << parts << " parts).\n";
-                    for (int p = 0; p < parts; ++p) {
-                        int count;
-                        std::cout << "How many elements to print from sequence part " << (p+1) << " (w*" << p << ")? ";
-                        count = ReadValue<int>();
-                        if (count > 0) {
-                            std::cout << "   Part " << (p+1) << " (first " << count << " elements): [";
-                            for (int i = 0; i < count; ++i) {
-                                try {
-                                    std::cout << currentSeq->Get(Ordinal(p, i));
-                                    if (i < count - 1) std::cout << ", ";
-                                } catch (const std::exception&) {
-                                    std::cout << " <End of part> ";
-                                    break;
-                                }
-                            }
-                            std::cout << "]\n";
+                }
+                
+                int count;
+                std::cout << "How many elements to print per part? "; count = ReadValue<int>();
+                
+                for (int p = 0; p < parts; ++p) {
+                    if (parts > 1) std::cout << "   Part " << (p+1) << " (w*" << p << ", first " << count << " elements): [";
+                    else std::cout << "   CurrentSeq (first " << count << " elements): [";
+                    
+                    for (int i = 0; i < count; ++i) {
+                        try {
+                            std::cout << currentSeq->Get(Ordinal(p, i));
+                            if (i < count - 1) std::cout << ", ";
+                        } catch (const std::exception&) {
+                            std::cout << " <End of part>";
+                            break;
                         }
                     }
-                } else {
-                    int count;
-                    std::cout << "How many elements to print? "; count = ReadValue<int>();
-                    try {
-                        std::cout << "   CurrentSeq (first " << count << " elements): [";
-                        for (int i = 0; i < count; ++i) {
-                            try {
-                                std::cout << currentSeq->Get(Ordinal(0, i));
-                                if (i < count - 1) std::cout << ", ";
-                            } catch (const std::exception&) {
-                                std::cout << " <End of part>";
-                                break;
-                            }
-                        }
-                        std::cout << "]\n";
-                    } catch (const std::exception& e) {
-                        std::cout << "Error: " << e.what() << "\n";
-                    }
+                    std::cout << "]\n";
                 }
                 break;
             }
