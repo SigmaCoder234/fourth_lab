@@ -7,35 +7,53 @@
 template <class T>
 class LazySequence {
 private:
-    // Кэш материализованных (вычисленных) элементов
     // Двумерный кэш: первый индекс = номер бесконечности (Омега), второй = конечный индекс
     DynamicArray<DynamicArray<T>*> cache;
 
     // Указатель на генератор
     Generator<T>* generator;
 
-    // Длина последовательности (может быть трансфинитной)
+    // Длина последовательности
     Ordinal length;
 
 public:
     // пустой ленивый список с заданным правилом генерации (по умолчанию длина = 1 бесконечность)
     LazySequence(IGeneratorRule<T>* rule) : cache(0), length(Ordinal::Omega()) {
-        generator = new Generator<T>(this, rule);
+        generator = new Generator<T>(rule);
     }
     
     // конструктор с указанием длины
     LazySequence(IGeneratorRule<T>* rule, Ordinal len) : cache(0), length(len) {
-        generator = new Generator<T>(this, rule);
+        generator = new Generator<T>(rule);
     }
 
     // Копирующий конструктор
     LazySequence(const LazySequence<T>& other) : cache(0), length(other.length) {
-        generator = other.generator->Clone(this);
+        generator = other.generator->Clone();
         cache.Resize(other.cache.GetCount());
         for (int i = 0; i < cache.GetCount(); ++i) {
             auto* inner = other.cache.Get(i);
             cache.Set(i, new DynamicArray<T>(*inner)); // Глубокое копирование
         }
+    }
+
+    //оператор присваивания для копирующего конструктора
+    LazySequence<T>& operator=(const LazySequence<T>& other) {
+        if (this == &other) return *this;
+        if (generator) delete generator;
+        for (int i = 0; i < cache.GetCount(); ++i) {
+            delete cache.Get(i);
+        }
+        cache.Resize(0);
+        
+        length = other.length;
+        generator = other.generator->Clone();
+        cache.Resize(other.cache.GetCount());
+        for (int i = 0; i < cache.GetCount(); ++i) {
+            auto* inner = other.cache.Get(i);
+            cache.Set(i, new DynamicArray<T>(*inner));
+        }
+        return *this;
     }
 
     // Деструктор
@@ -105,10 +123,14 @@ public:
         return count;
     }
 
-    // --- ОПЕРАЦИИ Reduce ---
+    //map
     template <class TOut>
     LazySequence<TOut>* Map(IMapFunction<T, TOut>* mapper);
 
+    //where
+    LazySequence<T>* Where(IWhereFunction<T>* whereFunc);
+
+    //reduce
     T Reduce(IReduceFunction<T>* reduceFunc, T initialValue, int countToReduce) {
         if (countToReduce < 0) 
             throw std::invalid_argument("Count cannot be negative");
@@ -120,8 +142,6 @@ public:
         }
         return result;
     }
-
-    LazySequence<T>* Where(IWhereFunction<T>* whereFunc);
 };
 
 // ----------- ПРАВИЛА ДЛЯ ЛЕНИВЫХ СПИСКОВ -----------

@@ -10,8 +10,7 @@ public:
 };
 
 TEST(GeneratorTest, BasicOperations) {
-    Generator<int> gen(nullptr, new SimpleRule());
-    EXPECT_TRUE(gen.HasNext());
+    Generator<int> gen(new SimpleRule());
     
     // Индекс начинается с 0, поэтому 0 * 10 = 0
     EXPECT_EQ(gen.GetNext(), 0);
@@ -22,12 +21,12 @@ TEST(GeneratorTest, BasicOperations) {
 }
 
 TEST(GeneratorTest, CloneOperation) {
-    Generator<int> gen(nullptr, new SimpleRule());
+    Generator<int> gen(new SimpleRule());
     gen.GetNext(); // 0
     gen.GetNext(); // 10
     
     // Клонируем генератор (должен скопировать состояние индекса, который сейчас 2)
-    Generator<int>* cloned = gen.Clone(nullptr);
+    Generator<int>* cloned = gen.Clone();
     
     EXPECT_EQ(cloned->GetNext(), 20);
     EXPECT_EQ(gen.GetNext(), 20); // Оригинальный тоже должен вернуть 20

@@ -25,10 +25,9 @@ private:
             data.Set(index, data.Get(parentIndex)); 
             data.Set(parentIndex, temp);
             
-            SiftUp(parentIndex); // Рекурсивный вызов
+            SiftUp(parentIndex);
         }
     }
-
 
     void SiftDown(int index){
         // Вычисляем индексы левого и правого потомков
@@ -68,7 +67,7 @@ public:
         data.Set(currentSize, item);
         // поднимаем его
         SiftUp(currentSize);
-}
+    }
 
     // вывод кучи
     void Print() const {
@@ -81,27 +80,27 @@ public:
 
     // Удаление и возврат вершины кучи O(log N)
     T Pop() {
-    if (IsEmpty()) {
-        throw std::out_of_range("Pop from empty PriorityQueue!");
+        if (IsEmpty()) {
+            throw std::out_of_range("Pop from empty PriorityQueue!");
+        }
+        
+        // Запоминаем корень
+        T root = data.Get(0);
+        
+        // Перемещаем последний элемент в корень (на место удаляемого)
+        int lastIndex = data.GetCount() - 1;
+        data.Set(0, data.Get(lastIndex));
+        
+        // Уменьшаем размер массива (отрезаем последний элемент)
+        data.Resize(lastIndex);
+        
+        // Если куча не стала пустой, опускаем новый корень вниз
+        if (!IsEmpty()) {
+            SiftDown(0);
+        }
+        
+        return root;
     }
-    
-    // Запоминаем корень
-    T root = data.Get(0);
-    
-    // Перемещаем последний элемент в корень (на место удаляемого)
-    int lastIndex = data.GetCount() - 1;
-    data.Set(0, data.Get(lastIndex));
-    
-    // Уменьшаем размер массива (отрезаем последний элемент)
-    data.Resize(lastIndex);
-    
-    // Если куча не стала пустой, опускаем новый корень вниз
-    if (!IsEmpty()) {
-        SiftDown(0);
-    }
-    
-    return root;
-}
 
     // Возврат вершины кучи без удаления O(1)
     T Peek() const {

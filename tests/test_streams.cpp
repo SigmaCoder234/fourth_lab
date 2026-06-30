@@ -1,12 +1,11 @@
 #include <gtest/gtest.h>
 #include "Stream.h"
 #include "../second_lab/src/DynamicArray.h"
+#include "../second_lab/src/MutableArraySequence.h"
 
 TEST(StreamsTest, ReadOnlyReadOnlySequenceStreamTest) {
-    DynamicArray<int> arr(3);
-    arr.Set(0, 5);
-    arr.Set(1, 15);
-    arr.Set(2, 25);
+    int data[] = {5, 15, 25};
+    MutableArraySequence<int> arr(data, 3);
     
     ReadOnlySequenceStream<int> stream(&arr);
     
@@ -43,7 +42,7 @@ TEST(StreamsTest, WriteOnlySequenceStreamTest) {
 }
 
 TEST(StreamsTest, EmptyStreamTest) {
-    DynamicArray<int> emptyArr(0); // Массив размера 0
+    MutableArraySequence<int> emptyArr; // Массив размера 0
     ReadOnlySequenceStream<int> stream(&emptyArr);
     
     // Поток должен сразу сигнализировать, что он достиг конца

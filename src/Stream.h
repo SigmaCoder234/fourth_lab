@@ -1,8 +1,8 @@
 #pragma once
-#include "Sequence.h"
+#include "../second_lab/src/MutableArraySequence.h"
 #include "LazySequence.h"
-#include "../second_lab/src/ICollection.h"
 #include <string>
+#include <stdexcept>
 
 // поток только для чтения
 template <class T>
@@ -11,7 +11,6 @@ public:
     virtual ~ReadOnlyStream() = default;
 
     // Считывает первый элемент потока и переходит на следующую позицию
-    // Должен бросать исключение std::out_of_range, если достигнут конец потока.
     virtual T Read() = 0;
 
     // Возвращает признак того, что достигнут конец потока
@@ -38,11 +37,11 @@ public:
 template <class T>
 class ReadOnlySequenceStream : public ReadOnlyStream<T> {
 private:
-    ICollection<T>* data;
+    MutableArraySequence<T>* data;
     int currentIndex;
 
 public:
-    ReadOnlySequenceStream(ICollection<T>* sequence) : data(sequence), currentIndex(0) {}
+    ReadOnlySequenceStream(MutableArraySequence<T>* sequence) : data(sequence), currentIndex(0) {}
 
     T Read() override {
         if (IsEndOfStream()) {

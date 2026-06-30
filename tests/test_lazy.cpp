@@ -115,7 +115,6 @@ TEST(LazySequenceTest, MemoizationCacheTest) {
     
     // Повторные обращения не должны увеличивать счетчик (данные берутся из кэша)
     EXPECT_EQ(seq.Get(Ordinal(0, 0)), 0);
-    EXPECT_EQ(seq.Get(Ordinal(0, 0)), 0);
     EXPECT_EQ(calls, 1); // Счетчик остался 1
     
     // Обращение к 3-му элементу вынудит вычислить 1, 2 и 3
@@ -206,4 +205,27 @@ TEST(LazySequenceTest, InsertTest) {
     EXPECT_EQ(inserted->Get(Ordinal(0, 5)), 4);
 
     delete inserted;
+}
+
+TEST(LazySequenceTest, AssignOperatorTest) {
+    auto* b1 = new TestArithmeticProgressionRule(1, 1);
+    LazySequence<int> seq1(b1);
+    LazySequence<int> seq2(nullptr);
+    
+    seq2 = seq1;
+    
+    EXPECT_EQ(seq2.Get(Ordinal(0, 0)), seq1.Get(Ordinal(0, 0)));
+    EXPECT_EQ(seq2.Get(Ordinal(0, 1)), seq1.Get(Ordinal(0, 1)));
+    EXPECT_EQ(seq2.Get(Ordinal(0, 2)), seq1.Get(Ordinal(0, 2)));
+
+    EXPECT_EQ(seq2.Get(Ordinal(0, 0)), 1);
+    EXPECT_EQ(seq2.Get(Ordinal(0, 1)), 2);
+    EXPECT_EQ(seq2.Get(Ordinal(0, 2)), 3);
+}
+
+// Тест на скорость кеша
+TEST(LazySequenceTest, CountTest){
+    auto* b1 = new TestArithmeticProgressionRule(0, 1);
+    LazySequence<int> seq(b1);
+    EXPECT_EQ(seq.Get(Ordinal(0, 1000000)), 1000000);
 }

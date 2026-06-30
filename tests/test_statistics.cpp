@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include "OnlineStatistics.h"
 #include "../second_lab/src/DynamicArray.h"
+#include "../second_lab/src/MutableArraySequence.h"
+#include "../second_lab/src/ArraySequence.h"
 
 TEST(OnlineStatisticsTest, BasicMetrics) {
     OnlineStatistics<int> stats;
@@ -36,12 +38,8 @@ TEST(OnlineStatisticsTest, BasicMetrics) {
 }
 
 TEST(OnlineStatisticsTest, ConsumeStreamTest) {
-    DynamicArray<int> arr(5);
-    arr.Set(0, 15);
-    arr.Set(1, 5);
-    arr.Set(2, 25);
-    arr.Set(3, 10);
-    arr.Set(4, 20);
+    int data[] = {15, 5, 25, 10, 20};
+    MutableArraySequence<int> arr(data, 5);
 
     ReadOnlySequenceStream<int> stream(&arr);
     OnlineStatistics<int> stats;
